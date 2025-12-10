@@ -1,0 +1,694 @@
+/* Google-Style Video Captioning UI */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    background: #fff;
+    color: #202124;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Styles */
+.header {
+    background: #fff;
+    border-bottom: 1px solid #e8eaed;
+    padding: 12px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 1px 2px rgba(60,64,67,.1);
+}
+
+.header-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #202124;
+    font-size: 20px;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.logo-link:hover {
+    opacity: 0.8;
+}
+
+.logo-link i {
+    font-size: 24px;
+    color: #1a73e8;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 40px 0;
+}
+
+.container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Footer Styles */
+.footer {
+    background: #f8f9fa;
+    border-top: 1px solid #e8eaed;
+    padding: 48px 0 24px;
+    margin-top: auto;
+}
+
+.footer-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    text-align: center;
+}
+
+.footer-copyright {
+    color: #5f6368;
+    font-size: 13px;
+}
+
+/* Responsive Header/Footer */
+@media (max-width: 768px) {
+    .header-container {
+        padding: 0 16px;
+    }
+}
+
+/* Main Card */
+.main-card {
+    margin-bottom: 20px;
+}
+
+/* Upload Section */
+.upload-section {
+    margin-bottom: 32px;
+}
+
+.upload-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.upload-option-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px 16px;
+    background: white;
+    border: 2px solid #dadce0;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    color: #202124;
+    transition: all 0.3s ease;
+    min-height: 120px;
+}
+
+.upload-option-card:hover {
+    background: #f8f9fa;
+    border-color: #1a73e8;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.upload-option-card i {
+    font-size: 32px;
+}
+
+.upload-option-card span {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* File Info */
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.upload-area:hover {
+    background: #e8f0fe;
+    border-color: #1a73e8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.15);
+}
+
+.upload-area i {
+    font-size: 42px;
+    color: #1a73e8;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.upload-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 6px;
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: #5f6368;
+}
+
+/* File Info Display */
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.file-info i {
+    color: #1a73e8;
+    font-size: 20px;
+}
+
+.file-info span {
+    flex: 1;
+    color: #202124;
+}
+
+.remove-btn {
+    background: transparent;
+    border: none;
+    color: #5f6368;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.remove-btn:hover {
+    background: #dadce0;
+}
+
+/* Options */
+.options {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.option-select {
+    padding: 10px 20px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    background: #fff;
+    color: #202124;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.option-select:hover {
+    border-color: #1a73e8;
+    background: #f8f9fa;
+}
+
+.option-select:focus {
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+}
+
+/* Action Section */
+.action-section {
+    text-align: center;
+}
+
+.btn-process {
+    padding: 14px 48px;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.btn-process:hover {
+    background: #1765cc;
+    box-shadow: 0 2px 8px rgba(26,115,232,0.3);
+}
+
+.btn-process:active {
+    transform: translateY(1px);
+}
+
+.btn-process i {
+    margin-right: 8px;
+}
+
+/* Secondary Button */
+.btn-secondary {
+    padding: 10px 20px;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #1765cc;
+}
+
+.btn-secondary i {
+    margin-right: 6px;
+}
+
+/* Cloud URL Section */
+#urlStatus.success {
+    background: #e8f5e9;
+    border: 1px solid #34a853;
+    color: #1e8e3e;
+}
+
+#urlStatus.error {
+    background: #fce8e6;
+    border: 1px solid #ea4335;
+    color: #c5221f;
+}
+
+/* Progress Card */
+.progress-card {
+    text-align: center;
+    padding: 60px 40px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.progress-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    color: #202124;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.progress-header i {
+    color: #1a73e8;
+    font-size: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e8f0fe;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1a73e8, #4285f4);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+.progress-percent {
+    color: #5f6368;
+    font-size: 32px;
+    font-weight: 300;
+    margin-top: 8px;
+}
+
+/* Results Card */
+.results-card {
+    padding: 40px 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.results-header {
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.results-header i {
+    font-size: 56px;
+    color: #34a853;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.results-header h2 {
+    font-size: 28px;
+    font-weight: 400;
+    color: #202124;
+    margin-bottom: 8px;
+}
+
+.results-header p {
+    color: #5f6368;
+    font-size: 14px;
+}
+
+/* Video Player Section */
+.video-player-section {
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #dadce0;
+}
+
+.video-player-section h3,
+.report-viewer-section h3,
+.download-section h3 {
+    font-size: 18px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.video-container {
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+
+.video-container video {
+    width: 100%;
+    max-height: 500px;
+    display: block;
+}
+
+.video-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.control-btn {
+    background: #f8f9fa;
+    border: 1px solid #dadce0;
+    color: #202124;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.control-btn:hover {
+    background: #f1f3f4;
+    box-shadow: 0 1px 2px rgba(0,0,0,.1);
+}
+
+.control-btn.active {
+    background: #1a73e8;
+    color: #fff;
+    border-color: #1a73e8;
+}
+
+.control-btn.active i {
+    color: #fff;
+}
+
+.control-btn i {
+    color: #1a73e8;
+}
+
+/* Report Viewer Section */
+.report-viewer-section {
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #dadce0;
+}
+
+.report-tabs {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.report-tab {
+    background: #fff;
+    border: 1px solid #dadce0;
+    color: #5f6368;
+    padding: 10px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.report-tab:hover {
+    background: #f8f9fa;
+}
+
+.report-tab.active {
+    background: #1a73e8;
+    color: #fff;
+    border-color: #1a73e8;
+}
+
+.report-content {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: left;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.report-panel {
+    display: none;
+    white-space: pre-wrap;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #202124;
+}
+
+.report-panel.active {
+    display: block;
+}
+
+.timeline-item {
+    background: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    border-left: 3px solid #1a73e8;
+}
+
+.timeline-time {
+    color: #1a73e8;
+    font-weight: 500;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.timeline-time.clickable-time {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: inline-block;
+}
+
+.timeline-time.clickable-time:hover {
+    background-color: #e8f0fe;
+    text-decoration: underline;
+}
+
+.timeline-time.clickable-time:active {
+    background-color: #d2e3fc;
+}
+
+.timeline-text {
+    color: #202124;
+    font-size: 14px;
+}
+
+/* Download Section */
+.download-section {
+    margin-bottom: 24px;
+}
+
+.results-body {
+    margin-bottom: 24px;
+}
+
+.result-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.result-item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.result-item-info i {
+    color: #1a73e8;
+    font-size: 20px;
+}
+
+.result-item-info strong {
+    color: #202124;
+}
+
+.btn-download {
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.btn-download:hover {
+    background: #1557b0;
+}
+
+.btn-again {
+    margin-top: 32px;
+    background: transparent;
+    border: 1px solid #dadce0;
+    color: #1a73e8;
+    padding: 12px 32px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.btn-again:hover {
+    background: rgba(26, 115, 232, 0.04);
+    border-color: #1a73e8;
+    box-shadow: 0 1px 2px rgba(0,0,0,.1);
+}
+
+/* Footer Links */
+.footer-links {
+    text-align: center;
+    padding: 20px 0;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+}
+
+.footer-links a {
+    color: #5f6368;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.footer-links a:hover {
+    color: #202124;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .logo {
+        font-size: 40px;
+    }
+    
+    .options {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .result-item {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .btn-download {
+        width: 100%;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.main-card,
+.progress-card,
+.results-card {
+    animation: fadeIn 0.3s ease;
+}

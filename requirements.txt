@@ -1,0 +1,54 @@
+# Core dependencies
+python-dotenv==1.0.0
+
+# Video processing
+opencv-python==4.8.1.78
+moviepy==1.0.3
+ffmpeg-python==0.2.0
+
+# Audio transcription
+openai-whisper==20231117
+torch>=2.2.0
+torchaudio>=2.2.0
+
+# LLM for intelligent summarization
+openai>=1.0.0
+
+# YouTube download
+yt-dlp==2025.12.8  # Primary - supports YouTube, Google Drive, Dropbox
+# pytube==15.0.0  # Removed - yt-dlp is superior and handles all cases
+
+# Web scraping (for authenticated video access)
+selenium==4.16.0
+webdriver-manager==4.0.1
+requests==2.31.0
+beautifulsoup4==4.12.2
+
+# Report generation
+reportlab==4.0.7
+python-docx==1.1.0
+Pillow==10.1.0
+
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+Werkzeug==3.0.1
+
+# Cloud Storage (frontend uses JS SDKs from CDN, not Python packages)
+# google-auth, google-api-python-client, dropbox - removed (were only used for upload feature)
+
+# GUI (Legacy - Tkinter comes with Python standard library)
+
+# Utilities
+numpy==1.26.2
+scipy==1.11.4
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Development tools
+black==23.12.1
+flake8==6.1.0
+mypy==1.7.1

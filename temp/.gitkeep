@@ -1,0 +1,2 @@
+# This file keeps the temp directory in version control
+# Temporary files are created during video processing and are gitignored

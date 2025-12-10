@@ -1,0 +1,2 @@
+# This file keeps the outputs directory in version control
+# Output files (videos, captions, reports) are generated at runtime and are gitignored

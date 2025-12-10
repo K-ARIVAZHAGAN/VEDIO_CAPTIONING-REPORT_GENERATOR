@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Video Caption & Report Generator - AI-Powered Transcription{% endblock %}
+
+{% block content %}
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="{{ dropbox_app_key }}"></script>
+<script>
+    // Cloud Storage API Configuration
+    const GOOGLE_CLIENT_ID = '{{ google_client_id }}';
+    const GOOGLE_API_KEY = '{{ google_api_key }}';
+    const DROPBOX_APP_KEY = '{{ dropbox_app_key }}';
+</script>
+
+<div class="container">
+    <!-- Main Card -->
+    <div class="main-card" id="mainCard">
+        <!-- Upload Actions -->
+        <div class="upload-section">
+            <!-- YouTube URL Input -->
+            <div style="margin-bottom: 24px;">
+                <input type="text" 
+                       id="youtubeUrlInput" 
+                       placeholder="Paste YouTube URL here and press Enter..."
+                       style="width: 100%; padding: 14px 16px; border: 2px solid #dadce0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s;"
+                       onfocus="this.style.borderColor='#ff0000'"
+                       onblur="this.style.borderColor='#dadce0'">
+            </div>
+            
+            <h3 style="text-align: center; color: #5f6368; font-size: 14px; font-weight: 400; margin-bottom: 20px;">
+                Or choose another upload method
+            </h3>
+            
+            <div class="upload-grid">
+                <button class="upload-option-card" id="uploadFileBtn">
+                    <i class="fas fa-laptop" style="color: #1a73e8;"></i>
+                    <span>Computer</span>
+                </button>
+                
+                <button class="upload-option-card" id="googleDriveBtn">
+                    <i class="fab fa-google-drive" style="color: #4285f4;"></i>
+                    <span>Google Drive</span>
+                </button>
+                
+                <button class="upload-option-card" id="dropboxBtn">
+                    <i class="fab fa-dropbox" style="color: #0061ff;"></i>
+                    <span>Dropbox</span>
+                </button>
+            </div>
+        </div>
+        
+        <input type="file" id="fileInput" accept="video/*" style="display: none;">
+
+        <div class="file-info" id="fileInfo" style="display: none;">
+            <i class="fas fa-file-video"></i>
+            <span id="fileName"></span>
+            <button class="remove-btn" id="removeFile">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Options -->
+        <div class="options">
+            <select id="modelSize" class="option-select">
+                <option value="tiny">Fast</option>
+                <option value="base" selected>Balanced</option>
+                <option value="small">Quality</option>
+                <option value="medium">High Quality</option>
+            </select>
+        </div>
+
+        <!-- Process Button -->
+        <div class="action-section">
+            <button class="btn-process" id="processBtn">
+                <i class="fas fa-play"></i> Process Video
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-card" id="progressCard" style="display: none;">
+        <div class="progress-header">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span id="progressText">Processing...</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <div class="progress-percent" id="progressPercent">0%</div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-card" id="resultsCard" style="display: none;">
+        <div class="results-header">
+            <i class="fas fa-check-circle"></i>
+            <h2>Complete</h2>
+        </div>
+        
+        <!-- Video Player Section -->
+        <div class="video-player-section" id="videoPlayerSection" style="display: none;">
+            <h3><i class="fas fa-play-circle"></i> Preview Video</h3>
+            <div class="video-container">
+                <video id="videoPlayer" controls>
+                    <track id="videoTrack" kind="subtitles" label="English" srclang="en" default>
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+
+        <!-- Report Viewer Section -->
+        <div class="report-viewer-section" id="reportViewerSection" style="display: none;">
+            <h3><i class="fas fa-file-alt"></i> View Report</h3>
+            <div class="report-tabs">
+                <button class="report-tab active" data-report="transcript">Transcript</button>
+                <button class="report-tab" data-report="summary">Summary</button>
+                <button class="report-tab" data-report="timeline">Timeline</button>
+                <button class="report-tab" data-report="scenes">Scenes</button>
+            </div>
+            <div class="report-content">
+                <div id="reportTranscript" class="report-panel active"></div>
+                <div id="reportSummary" class="report-panel"></div>
+                <div id="reportTimeline" class="report-panel"></div>
+                <div id="reportScenes" class="report-panel"></div>
+            </div>
+            <div id="reportDownloadBtn" style="padding: 20px; border-top: 1px solid #dadce0;"></div>
+        </div>
+
+        <!-- Download Files Section -->
+        <div class="download-section">
+            <h3><i class="fas fa-download"></i> Downloads</h3>
+            <div class="results-body" id="resultsList"></div>
+        </div>
+        
+        <button class="btn-again" id="processAgain">
+            Process Another Video
+        </button>
+    </div>
+
+    <!-- Footer Links -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}
