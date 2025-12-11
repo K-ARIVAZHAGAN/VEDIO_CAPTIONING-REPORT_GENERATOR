@@ -1,3 +1,6 @@
+# Environment variables (contains sensitive data)
+.env
+
 # Output files (generated content, not needed in repo)
 outputs/
 
