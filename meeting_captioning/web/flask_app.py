@@ -312,6 +312,51 @@ def cancel_job(job_id: str):
             return jsonify({'error': 'Job not found'}), 404
 
 
+@app.route('/api/chat', methods=['POST'])
+def chat_with_ai():
+    """Handle AI chat questions about the video"""
+    try:
+        data = request.get_json()
+        question = data.get('question', '').strip()
+        report_path = data.get('report_path', '')
+        
+        if not question:
+            return jsonify({'error': 'Question is required'}), 400
+        
+        if not report_path:
+            return jsonify({'error': 'Report path is required'}), 400
+        
+        # Initialize LLM
+        from meeting_captioning.ai.llm_processor import LLMProcessor
+        llm = LLMProcessor()
+        
+        if not llm.is_available():
+            return jsonify({
+                'error': 'AI features not available',
+                'message': 'Phi-2 model not loaded. Run: python download_model.py'
+            }), 503
+        
+        # Load report
+        report_file = Path(report_path)
+        if not report_file.exists():
+            return jsonify({'error': 'Report not found'}), 404
+        
+        llm.load_report(report_file)
+        
+        # Get answer
+        answer = llm.answer_question(question)
+        
+        return jsonify({
+            'success': True,
+            'question': question,
+            'answer': answer
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Chat error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/download/<path:filename>', methods=['GET'])
 def download_file(filename: str):
     """Download a generated file"""

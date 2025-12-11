@@ -115,12 +115,24 @@
                 <button class="report-tab" data-report="summary">Summary</button>
                 <button class="report-tab" data-report="timeline">Timeline</button>
                 <button class="report-tab" data-report="scenes">Scenes</button>
+                <button class="report-tab" data-report="ai-summary">AI Summary</button>
+                <button class="report-tab" data-report="chat">Q&A Chat</button>
             </div>
             <div class="report-content">
                 <div id="reportTranscript" class="report-panel active"></div>
                 <div id="reportSummary" class="report-panel"></div>
                 <div id="reportTimeline" class="report-panel"></div>
                 <div id="reportScenes" class="report-panel"></div>
+                <div id="reportAi-summary" class="report-panel"></div>
+                <div id="reportChat" class="report-panel">
+                    <div class="chat-container">
+                        <div id="chatMessages" class="chat-messages"></div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chatInput" placeholder="Ask a question about the video..." />
+                            <button id="chatSendBtn"><i class="fas fa-paper-plane"></i> Send</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="reportDownloadBtn" style="padding: 20px; border-top: 1px solid #dadce0;"></div>
         </div>

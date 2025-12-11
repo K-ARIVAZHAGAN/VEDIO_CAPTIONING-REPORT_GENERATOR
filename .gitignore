@@ -1,127 +1,41 @@
-# Python
+# Output files (generated content, not needed in repo)
+outputs/
+
+# Log files
+logs/
+
+# Temporary files and sample videos (in temp folder only)
+temp/*.mp4
+temp/*.avi
+temp/*.mov
+temp/*.mkv
+temp/*.webm
+temp/*.wav
+temp/*.mp3
+temp/downloads/
+
+# Python cache
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+*.pyo
+*.pyd
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
 
-# Virtual environments
-venv/
-ENV/
-env/
-.venv
-
-# IDE
+# IDE and OS files
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
 .DS_Store
+Thumbs.db
 
-# Environment variables
-# .env (INCLUDED for backup - remove this comment if going public!)
-.env.local
+# Virtual environment (users create their own)
+.venv/
+venv/
+env/
 
-# Cloud Storage Credentials
-google_drive_credentials.json
-# client_secret*.json (INCLUDED for backup)
-.gdrive_token.pickle
+# Client secrets and credentials (sensitive)
+client_secret*.json
 *.pickle
+token.json
 
-# Dropbox tokens
-dropbox_token.txt
-
-# API Keys and Secrets
-*secret*.json
-*secret*.txt
-*token*.json
-*api_key*.txt
-
-# Logs
-logs/*.log
-*.log
-
-# Outputs (keep directory structure)
-outputs/**/*
-!outputs/.gitkeep
-!outputs/uploads/
-!outputs/uploads/.gitkeep
-
-# Temp files (keep directory structure)
-temp/**/*
-!temp/.gitkeep
-
-# Video files
-*.mp4
-*.avi
-*.mov
-*.mkv
-*.flv
-*.wmv
-*.webm
-
-# Audio files
-*.wav
-*.mp3
-*.flac
-*.aac
-*.m4a
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-
-# MyPy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Distribution / packaging
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-.hypothesis/
-.pytest_cache/
-nosetests.xml
-coverage.xml
-*.cover
-.coverage.*
-
-# Selenium
-chromedriver
-geckodriver
-*.crdownload
-
-# API Keys (IMPORTANT)
-config.py
-
-# Assets that might be added later
-assets/**/*
-!assets/.gitkeep
+# Test files
+test_model.py

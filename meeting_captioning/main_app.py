@@ -4,6 +4,7 @@ Main application orchestrator for the meeting video captioning pipeline.
 This module coordinates all processing steps from input to final outputs.
 """
 
+import json
 from pathlib import Path
 from typing import Optional, Dict, Any, Callable
 from dataclasses import dataclass
@@ -273,6 +274,41 @@ class MeetingCaptioningApp(LoggerMixin):
             self._update_progress(90, "Master report saved (JSON)")
             
             # Note: PDF/DOCX/TXT can be generated on-demand via /api/convert-report
+            
+            # Step 8.5: Generate AI summary (if LLM available) (92-95%)
+            try:
+                self._update_progress(92, "Generating AI summary...")
+                from meeting_captioning.ai.llm_processor import LLMProcessor
+                
+                llm = LLMProcessor()
+                if llm.is_available():
+                    # Load the report we just created
+                    llm.load_report(json_path)
+                    
+                    # Generate summary
+                    summary = llm.generate_summary()
+                    key_points = llm.generate_key_points()
+                    
+                    # Save AI summary
+                    ai_summary = {
+                        "summary": summary,
+                        "key_points": key_points,
+                        "generated_at": metadata.get('created_at', '')
+                    }
+                    
+                    ai_summary_path = self.file_manager.session_dir / 'reports' / 'ai_summary.json'
+                    with open(ai_summary_path, 'w', encoding='utf-8') as f:
+                        json.dump(ai_summary, f, indent=2, ensure_ascii=False)
+                    
+                    report_paths['ai_summary'] = ai_summary_path
+                    self._update_progress(95, "AI summary generated")
+                    self.logger.info(f"AI summary saved: {ai_summary_path}")
+                else:
+                    self.logger.info("LLM not available, skipping AI summary")
+                    self._update_progress(95, "AI features not available (model not loaded)")
+            except Exception as e:
+                self.logger.warning(f"Failed to generate AI summary: {e}")
+                self._update_progress(95, "AI summary skipped")
             
             # Step 9: Create manifest and finalize (100%)
             self._update_progress(98, "Finalizing...")

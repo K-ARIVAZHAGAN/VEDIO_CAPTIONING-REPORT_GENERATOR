@@ -476,22 +476,25 @@ body {
 
 .report-tabs {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     justify-content: center;
     margin-bottom: 16px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
 }
 
 .report-tab {
     background: #fff;
     border: 1px solid #dadce0;
     color: #5f6368;
-    padding: 10px 24px;
+    padding: 8px 16px;
     border-radius: 20px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .report-tab:hover {

@@ -6,6 +6,7 @@ let uploadedFilePath = null;
 let currentJobId = null;
 let statusInterval = null;
 let currentJsonPath = null;
+let currentSessionDir = null;
 
 console.log('app.js loaded - jQuery available:', typeof $ !== 'undefined');
 
@@ -489,7 +490,8 @@ function showResults(result) {
         </div>
     `;
     
-    // Store JSON path for report conversion
+    // Store JSON path and session dir for report conversion
+    currentSessionDir = result.session_dir;
     if (result.report_files) {
         result.report_files.forEach(file => {
             const ext = file.split('.').pop().toUpperCase();
@@ -540,12 +542,15 @@ function loadReportData(result) {
         $('#reportTimeline').html('<p style="color: #5f6368;">Captions not generated</p>');
     }
     
-    // Load JSON report for scenes
+    // Load JSON report for scenes and AI summary
     if (result.report_files && result.report_files.length > 0) {
-        const jsonReport = result.report_files.find(f => f.endsWith('.json'));
+        const jsonReport = result.report_files.find(f => f.endsWith('report.json'));
         if (jsonReport) {
             $.getJSON(`/api/download/${encodeURIComponent(jsonReport)}?attachment=false`, function(reportData) {
                 displayScenes(reportData.scenes || [], result.session_dir);
+                
+                // Load AI summary if available
+                loadAISummary(result.session_dir);
             }).fail(function(xhr) {
                 console.error('Failed to load report JSON:', xhr);
                 $('#reportScenes').html('<p style="color: #5f6368;">Scenes data not available</p>');
@@ -848,6 +853,13 @@ function showFormatSelector() {
                         <span style="font-weight: 500;">Text File</span>
                     </button>
                 </div>
+                <div style="margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="includeAISummary" checked style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
+                        <span style="color: #202124; font-weight: 500;"><i class="fas fa-robot" style="color: #1a73e8; margin-right: 8px;"></i>Include AI Summary</span>
+                    </label>
+                    <p style="margin: 8px 0 0 30px; font-size: 12px; color: #5f6368;">Add AI-generated summary and key points to the report</p>
+                </div>
                 <button id="closeModal" style="margin-top: 20px; width: 100%; padding: 12px; border: 1px solid #dadce0; border-radius: 4px; background: white; cursor: pointer; font-weight: 500;">
                     Cancel
                 </button>
@@ -866,8 +878,9 @@ function showFormatSelector() {
     // Format selection
     $('.format-option').click(function() {
         const format = $(this).data('format');
+        const includeAI = $('#includeAISummary').is(':checked');
         $('#formatModal').remove();
-        downloadReport(format);
+        downloadReport(format, includeAI);
     });
     
     // Close modal
@@ -878,7 +891,7 @@ function showFormatSelector() {
     });
 }
 
-async function downloadReport(format) {
+async function downloadReport(format, includeAI = true) {
     if (!currentJsonPath) {
         alert('No report available');
         return;
@@ -893,10 +906,24 @@ async function downloadReport(format) {
         if (!response.ok) throw new Error('Failed to load report');
         
         const reportData = await response.json();
+        
+        // Load AI summary if we need to include it
+        if (includeAI && currentSessionDir) {
+            try {
+                const aiSummaryPath = currentSessionDir + '/reports/ai_summary.json';
+                const aiResponse = await fetch(`/api/download/${encodeURIComponent(aiSummaryPath)}?attachment=false`);
+                if (aiResponse.ok) {
+                    reportData.ai_summary = await aiResponse.json();
+                }
+            } catch (e) {
+                console.log('AI summary not available:', e);
+            }
+        }
+        
         const baseFilename = 'report_' + new Date().getTime();
         
         if (format === 'pdf') {
-            const doc = generatePDF(reportData);
+            const doc = generatePDF(reportData, includeAI);
             doc.save(`${baseFilename}.pdf`);
         } else if (format === 'docx') {
             const docContent = generateDOCX(reportData);
@@ -915,7 +942,7 @@ async function downloadReport(format) {
             const blob = zip.generate({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
             saveAs(blob, `${baseFilename}.docx`);
         } else if (format === 'txt') {
-            const text = generateTXT(reportData);
+            const text = generateTXT(reportData, includeAI);
             const blob = new Blob([text], { type: 'text/plain' });
             saveAs(blob, `${baseFilename}.txt`);
         }
@@ -942,6 +969,7 @@ function resetAll() {
     currentJobId = null;
     uploadedFilePath = null;
     currentJsonPath = null;
+    currentSessionDir = null;
     if (statusInterval) {
         clearInterval(statusInterval);
     }
@@ -951,37 +979,120 @@ function resetAll() {
 }
 
 // Client-side report generation
-function generatePDF(reportData) {
+function generatePDF(reportData, includeAI = true) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
     // Title
-    doc.setFontSize(18);
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
     doc.text('Video Analysis Report', 105, 20, { align: 'center' });
     
-    // Metadata
+    // Subtitle
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(reportData.title || 'Video Analysis', 105, 28, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+    
+    // Metadata Box
     doc.setFontSize(10);
-    let y = 35;
+    let y = 40;
     
     const metadata = reportData.metadata || {};
     const duration = metadata.duration || 0;
     const durationFormatted = formatDuration(duration);
     const modelSize = metadata.model_size || 'base';
     const timestamp = metadata.timestamp || reportData.date || new Date().toISOString();
+    const scenesCount = reportData.scenes ? reportData.scenes.length : 0;
+    const sectionsCount = reportData.sections ? reportData.sections.length : 0;
     
-    doc.text(`Duration: ${durationFormatted}`, 20, y);
+    // Draw info box
+    doc.setDrawColor(220, 220, 220);
+    doc.rect(15, y - 5, 180, 28, 'S');
+    
+    doc.text(`📹 Duration: ${durationFormatted}`, 20, y);
+    doc.text(`🎬 Scenes: ${scenesCount}`, 110, y);
     y += 7;
-    doc.text(`Model: ${modelSize}`, 20, y);
+    doc.text(`🤖 Model: ${modelSize}`, 20, y);
+    doc.text(`📝 Sections: ${sectionsCount}`, 110, y);
     y += 7;
-    doc.text(`Generated: ${new Date(timestamp).toLocaleString()}`, 20, y);
-    y += 7;
-    doc.text(`Title: ${reportData.title || 'Video Analysis'}`, 20, y);
-    y += 15;
+    doc.text(`📅 Generated: ${new Date(timestamp).toLocaleString()}`, 20, y);
+    y += 12;
+    
+    // Table of Contents
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('📑 Table of Contents', 20, y);
+    doc.setFont(undefined, 'normal');
+    y += 8;
+    doc.setFontSize(10);
+    
+    let tocItems = [];
+    if (includeAI && reportData.ai_summary) tocItems.push('🤖 AI Summary');
+    tocItems.push('📊 Summary');
+    tocItems.push('🔑 Key Points');
+    if (reportData.sections && reportData.sections.length > 0) tocItems.push('📖 Detailed Analysis');
+    tocItems.push('📄 Full Transcript');
+    
+    tocItems.forEach((item, idx) => {
+        doc.text(`${idx + 1}. ${item}`, 25, y);
+        y += 6;
+    });
+    y += 10;
+    
+    // AI Summary (if included)
+    if (includeAI && reportData.ai_summary) {
+        if (y > 200) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(26, 115, 232);
+        doc.text('🤖 AI-Generated Summary', 20, y);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, 'normal');
+        y += 10;
+        doc.setFontSize(10);
+        const aiSummaryText = reportData.ai_summary.summary || reportData.ai_summary;
+        const aiSummaryLines = doc.splitTextToSize(aiSummaryText, 170);
+        doc.text(aiSummaryLines, 20, y);
+        y += aiSummaryLines.length * 5 + 10;
+        
+        // AI Key Points
+        if (reportData.ai_summary.key_points && reportData.ai_summary.key_points.length > 0) {
+            doc.setFontSize(12);
+            doc.setTextColor(26, 115, 232);
+            doc.text('AI Key Points', 20, y);
+            doc.setTextColor(0, 0, 0);
+            y += 8;
+            doc.setFontSize(10);
+            reportData.ai_summary.key_points.forEach((point, idx) => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                const timestamp = point.timestamp ? ` [${point.timestamp}]` : '';
+                const pointText = point.point || point;
+                const pointLines = doc.splitTextToSize(`${idx + 1}. ${pointText}${timestamp}`, 165);
+                doc.text(pointLines, 20, y);
+                y += pointLines.length * 5 + 3;
+            });
+            y += 10;
+        }
+    }
     
     // Summary
-    doc.setFontSize(14);
-    doc.text('Summary', 20, y);
-    y += 8;
+    if (y > 220) {
+        doc.addPage();
+        y = 20;
+    }
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('📊 Summary', 20, y);
+    doc.setFont(undefined, 'normal');
+    y += 10;
     doc.setFontSize(10);
     const summary = reportData.summary || 'No summary available';
     const summaryLines = doc.splitTextToSize(summary, 170);
@@ -990,9 +1101,15 @@ function generatePDF(reportData) {
     
     // Key Points
     if (reportData.key_points && reportData.key_points.length > 0) {
-        doc.setFontSize(14);
-        doc.text('Key Points', 20, y);
-        y += 8;
+        if (y > 220) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('🔑 Key Points', 20, y);
+        doc.setFont(undefined, 'normal');
+        y += 10;
         doc.setFontSize(10);
         reportData.key_points.forEach((point, idx) => {
             if (y > 270) {
@@ -1006,14 +1123,49 @@ function generatePDF(reportData) {
         y += 10;
     }
     
-    // Detailed Sections (if available)
-    if (reportData.sections && reportData.sections.length > 0 && reportData.sections[0].summary) {
-        if (y > 250) {
+    // Scene Analysis
+    if (reportData.scenes && reportData.scenes.length > 0) {
+        if (y > 220) {
             doc.addPage();
             y = 20;
         }
-        doc.setFontSize(14);
-        doc.text('Detailed Analysis by Section', 20, y);
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('🎬 Scene Analysis', 20, y);
+        doc.setFont(undefined, 'normal');
+        y += 10;
+        doc.setFontSize(9);
+        
+        const maxScenes = 15; // Show first 15 scenes
+        reportData.scenes.slice(0, maxScenes).forEach((scene, idx) => {
+            if (y > 270) {
+                doc.addPage();
+                y = 20;
+            }
+            const sceneTime = formatTime(scene.timestamp || 0);
+            doc.text(`Scene ${idx + 1} [${sceneTime}]`, 20, y);
+            y += 5;
+        });
+        
+        if (reportData.scenes.length > maxScenes) {
+            y += 3;
+            doc.setTextColor(100, 100, 100);
+            doc.text(`... and ${reportData.scenes.length - maxScenes} more scenes`, 20, y);
+            doc.setTextColor(0, 0, 0);
+        }
+        y += 10;
+    }
+    
+    // Detailed Sections (if available)
+    if (reportData.sections && reportData.sections.length > 0 && reportData.sections[0].summary) {
+        if (y > 220) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('📖 Detailed Analysis by Section', 20, y);
+        doc.setFont(undefined, 'normal');
         y += 10;
         
         reportData.sections.forEach((section, idx) => {
@@ -1064,13 +1216,13 @@ function generatePDF(reportData) {
     }
     
     // Full Transcript
-    if (y > 250) {
-        doc.addPage();
-        y = 20;
-    }
-    doc.setFontSize(14);
-    doc.text('Full Transcript', 20, y);
-    y += 8;
+    doc.addPage();
+    y = 20;
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('📄 Full Transcript', 20, y);
+    doc.setFont(undefined, 'normal');
+    y += 10;
     doc.setFontSize(9);
     
     // Use full_transcript if available, otherwise use sections
@@ -1170,7 +1322,7 @@ function generateDOCX(reportData) {
     return content;
 }
 
-function generateTXT(reportData) {
+function generateTXT(reportData, includeAI = true) {
     const metadata = reportData.metadata || {};
     const duration = metadata.duration || 0;
     const durationFormatted = formatDuration(duration);
@@ -1178,31 +1330,86 @@ function generateTXT(reportData) {
     const timestamp = metadata.timestamp || reportData.date || new Date().toISOString();
     const title = reportData.title || 'Video Analysis';
     const summary = reportData.summary || 'No summary available';
+    const scenesCount = reportData.scenes ? reportData.scenes.length : 0;
+    const sectionsCount = reportData.sections ? reportData.sections.length : 0;
     
-    let text = 'VIDEO ANALYSIS REPORT\n';
-    text += '='.repeat(50) + '\n\n';
-    text += `Title: ${title}\n`;
-    text += `Duration: ${durationFormatted}\n`;
-    text += `Model: ${modelSize}\n`;
-    text += `Generated: ${new Date(timestamp).toLocaleString()}\n\n`;
+    let text = '╔════════════════════════════════════════════════╗\n';
+    text += '║       VIDEO ANALYSIS REPORT                    ║\n';
+    text += '╚════════════════════════════════════════════════╝\n\n';
+    text += `📹 Title: ${title}\n`;
+    text += `⏱️  Duration: ${durationFormatted}\n`;
+    text += `🤖 Model: ${modelSize}\n`;
+    text += `🎬 Scenes: ${scenesCount}\n`;
+    text += `📝 Sections: ${sectionsCount}\n`;
+    text += `📅 Generated: ${new Date(timestamp).toLocaleString()}\n\n`;
     
-    text += 'SUMMARY\n';
-    text += '-'.repeat(50) + '\n';
+    // Table of Contents
+    text += '📑 TABLE OF CONTENTS\n';
+    text += '═'.repeat(70) + '\n';
+    let tocNum = 1;
+    if (includeAI && reportData.ai_summary) text += `${tocNum++}. 🤖 AI-Generated Summary\n`;
+    text += `${tocNum++}. 📊 Summary\n`;
+    text += `${tocNum++}. 🔑 Key Points\n`;
+    if (reportData.scenes && reportData.scenes.length > 0) text += `${tocNum++}. 🎬 Scene Analysis\n`;
+    if (reportData.sections && reportData.sections.length > 0) text += `${tocNum++}. 📖 Detailed Analysis\n`;
+    text += `${tocNum}. 📄 Full Transcript\n\n`;
+    
+    // AI Summary (if included)
+    if (includeAI && reportData.ai_summary) {
+        text += '\n' + '═'.repeat(70) + '\n';
+        text += '🤖 AI-GENERATED SUMMARY\n';
+        text += '═'.repeat(70) + '\n\n';
+        const aiSummaryText = reportData.ai_summary.summary || reportData.ai_summary;
+        text += `${aiSummaryText}\n\n`;
+        
+        if (reportData.ai_summary.key_points && reportData.ai_summary.key_points.length > 0) {
+            text += 'AI KEY POINTS:\n';
+            text += '-'.repeat(70) + '\n';
+            reportData.ai_summary.key_points.forEach((point, idx) => {
+                const timestamp = point.timestamp ? ` [${point.timestamp}]` : '';
+                const pointText = point.point || point;
+                text += `${idx + 1}. ${pointText}${timestamp}\n`;
+            });
+            text += '\n';
+        }
+    }
+    
+    text += '\n' + '═'.repeat(70) + '\n';
+    text += '📊 SUMMARY\n';
+    text += '═'.repeat(70) + '\n';
     text += `${summary}\n\n`;
     
     if (reportData.key_points && reportData.key_points.length > 0) {
-        text += 'KEY POINTS\n';
-        text += '-'.repeat(50) + '\n';
+        text += '\n' + '═'.repeat(70) + '\n';
+        text += '🔑 KEY POINTS\n';
+        text += '═'.repeat(70) + '\n';
         reportData.key_points.forEach((point, idx) => {
             text += `${idx + 1}. ${point}\n`;
         });
         text += '\n';
     }
     
+    // Scene Analysis
+    if (reportData.scenes && reportData.scenes.length > 0) {
+        text += '\n' + '═'.repeat(70) + '\n';
+        text += '🎬 SCENE ANALYSIS\n';
+        text += '═'.repeat(70) + '\n';
+        const maxScenes = 20;
+        reportData.scenes.slice(0, maxScenes).forEach((scene, idx) => {
+            const sceneTime = formatTime(scene.timestamp || 0);
+            text += `Scene ${idx + 1} [${sceneTime}]\n`;
+        });
+        if (reportData.scenes.length > maxScenes) {
+            text += `\n... and ${reportData.scenes.length - maxScenes} more scenes\n`;
+        }
+        text += '\n';
+    }
+    
     // Detailed sections
     if (reportData.sections && reportData.sections.length > 0 && reportData.sections[0].summary) {
-        text += 'DETAILED ANALYSIS BY SECTION\n';
-        text += '-'.repeat(50) + '\n';
+        text += '\n' + '═'.repeat(70) + '\n';
+        text += '📖 DETAILED ANALYSIS BY SECTION\n';
+        text += '═'.repeat(70) + '\n';
         reportData.sections.forEach((section, idx) => {
             text += `\nSection ${idx + 1} [${formatTime(section.start_time)} - ${formatTime(section.end_time)}]\n`;
             if (section.summary) {
@@ -1219,8 +1426,9 @@ function generateTXT(reportData) {
         text += '\n';
     }
     
-    text += 'FULL TRANSCRIPT\n';
-    text += '-'.repeat(50) + '\n';
+    text += '\n' + '═'.repeat(70) + '\n';
+    text += '📄 FULL TRANSCRIPT\n';
+    text += '═'.repeat(70) + '\n';
     if (reportData.full_transcript) {
         text += reportData.full_transcript + '\n';
     } else if (reportData.sections && reportData.sections.length > 0) {
@@ -1325,4 +1533,167 @@ function getCloudProvider(url) {
         return 'Dropbox';
     }
     return 'Cloud Storage';
+}
+
+// ============================================
+// AI Features - Summary and Chat
+// ============================================
+
+function loadAISummary(sessionDir) {
+    const summaryPath = sessionDir + '/reports/ai_summary.json';
+    
+    $.getJSON(`/api/download/${encodeURIComponent(summaryPath)}?attachment=false`, function(data) {
+        displayAISummary(data);
+    }).fail(function(xhr) {
+        $('#reportAi-summary').html(`
+            <div style="padding: 20px; text-align: center; color: #5f6368;">
+                <i class="fas fa-robot" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
+                <p><strong>AI Summary not available</strong></p>
+                <p style="font-size: 14px;">The Phi-2 model may not be loaded.</p>
+                <p style="font-size: 14px;">Run: <code>python download_model.py</code></p>
+            </div>
+        `);
+    });
+    
+    // Setup chat with report path
+    currentJsonPath = sessionDir + '/reports/report.json';
+    setupChat();
+}
+
+function displayAISummary(data) {
+    let html = '<div style="padding: 20px;">';
+    
+    // Executive Summary
+    html += '<div style="margin-bottom: 24px;">';
+    html += '<h3 style="color: #1a73e8; margin-bottom: 12px;"><i class="fas fa-robot"></i> AI Executive Summary</h3>';
+    html += `<p style="line-height: 1.6; color: #202124;">${data.summary || 'No summary available'}</p>`;
+    html += '</div>';
+    
+    // Key Points
+    if (data.key_points && data.key_points.length > 0) {
+        html += '<div>';
+        html += '<h4 style="color: #1a73e8; margin-bottom: 12px;"><i class="fas fa-list-ul"></i> Key Points</h4>';
+        html += '<ul style="line-height: 1.8;">';
+        data.key_points.forEach(point => {
+            html += `<li style="margin-bottom: 8px;">${point}</li>`;
+        });
+        html += '</ul>';
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    $('#reportAi-summary').html(html);
+}
+
+function setupChat() {
+    // Clear previous messages
+    $('.chat-messages').empty();
+    
+    // Welcome message
+    const welcomeMsg = $('<div class="chat-message ai-message"></div>').html(`
+        <div style="display: flex; align-items: start; gap: 12px;">
+            <i class="fas fa-robot" style="color: #1a73e8; font-size: 24px;"></i>
+            <div>
+                <p><strong>AI Assistant</strong></p>
+                <p>Ask me anything about the video! Examples:</p>
+                <ul style="margin: 8px 0; padding-left: 20px;">
+                    <li>What is this video about?</li>
+                    <li>Summarize the main points</li>
+                    <li>What happened at 2:30?</li>
+                    <li>Who spoke the most?</li>
+                </ul>
+            </div>
+        </div>
+    `);
+    $('.chat-messages').append(welcomeMsg);
+    
+    // Bind send button
+    $('#chatSendBtn').off('click').on('click', sendChatMessage);
+    $('#chatInput').off('keypress').on('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendChatMessage();
+        }
+    });
+}
+
+function sendChatMessage() {
+    const input = $('#chatInput');
+    const question = input.val().trim();
+    
+    if (!question) return;
+    
+    // Display user message
+    const userMsg = $('<div class="chat-message user-message"></div>').html(`
+        <div style="display: flex; align-items: start; gap: 12px; justify-content: flex-end;">
+            <div style="background: #e8f0fe; padding: 12px 16px; border-radius: 18px; max-width: 70%;">
+                <p style="margin: 0;">${question}</p>
+            </div>
+            <i class="fas fa-user-circle" style="color: #5f6368; font-size: 24px;"></i>
+        </div>
+    `);
+    $('.chat-messages').append(userMsg);
+    
+    // Clear input
+    input.val('');
+    
+    // Show loading
+    const loadingMsg = $('<div class="chat-message ai-message" id="loadingMsg"></div>').html(`
+        <div style="display: flex; align-items: start; gap: 12px;">
+            <i class="fas fa-robot" style="color: #1a73e8; font-size: 24px;"></i>
+            <div>
+                <i class="fas fa-spinner fa-spin"></i> Thinking...
+            </div>
+        </div>
+    `);
+    $('.chat-messages').append(loadingMsg);
+    
+    // Scroll to bottom
+    const chatContainer = $('.chat-messages')[0];
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    // Send to API
+    $.ajax({
+        url: '/api/chat',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            question: question,
+            report_path: currentJsonPath
+        }),
+        success: function(response) {
+            $('#loadingMsg').remove();
+            
+            const aiMsg = $('<div class="chat-message ai-message"></div>').html(`
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <i class="fas fa-robot" style="color: #1a73e8; font-size: 24px;"></i>
+                    <div style="background: #f1f3f4; padding: 12px 16px; border-radius: 18px; max-width: 70%;">
+                        <p style="margin: 0; line-height: 1.6;">${response.answer}</p>
+                    </div>
+                </div>
+            `);
+            $('.chat-messages').append(aiMsg);
+            
+            // Scroll to bottom
+            const chatContainer = $('.chat-messages')[0];
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        },
+        error: function(xhr) {
+            $('#loadingMsg').remove();
+            
+            const errorMsg = xhr.responseJSON?.error || 'Failed to get response';
+            const aiMsg = $('<div class="chat-message ai-message"></div>').html(`
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <i class="fas fa-robot" style="color: #ea4335; font-size: 24px;"></i>
+                    <div style="background: #fce8e6; padding: 12px 16px; border-radius: 18px; max-width: 70%;">
+                        <p style="margin: 0; color: #d93025;"><strong>Error:</strong> ${errorMsg}</p>
+                    </div>
+                </div>
+            `);
+            $('.chat-messages').append(aiMsg);
+            
+            // Scroll to bottom
+            const chatContainer = $('.chat-messages')[0];
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    });
 }
