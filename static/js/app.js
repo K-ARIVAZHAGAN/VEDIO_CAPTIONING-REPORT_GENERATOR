@@ -16,14 +16,29 @@ $(document).ready(function() {
     loadGooglePicker();
 });
 
+var googleAccessToken = null;
+var tokenClient = null;
+
 function loadGooglePicker() {
-    if (typeof gapi !== 'undefined' && GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID !== '') {
-        gapi.load('auth2', function() {
-            gapi.auth2.init({client_id: GOOGLE_CLIENT_ID});
+    if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID !== '' && GOOGLE_API_KEY && GOOGLE_API_KEY !== '') {
+        // Initialize the Google Identity Services token client
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: 'https://www.googleapis.com/auth/drive.readonly',
+            callback: (tokenResponse) => {
+                googleAccessToken = tokenResponse.access_token;
+                console.log('Access token received');
+            },
         });
-        gapi.load('picker', function() {
-            console.log('Google Picker loaded');
+        
+        // Load the picker API
+        gapi.load('picker', () => {
+            console.log('Google Picker API loaded successfully');
         });
+        
+        console.log('Google Identity Services initialized');
+    } else {
+        console.warn('Google Drive not configured - missing Client ID or API Key');
     }
 }
 
@@ -170,30 +185,40 @@ function openGoogleDrivePicker() {
         return;
     }
     
-    if (typeof gapi === 'undefined' || !gapi.auth2) {
-        alert('Google Auth not loaded. Please refresh the page.');
+    if (!tokenClient) {
+        alert('Google Identity Services not initialized. Please refresh the page.');
         return;
     }
     
-    const authInstance = gapi.auth2.getAuthInstance();
-    if (!authInstance) {
-        alert('Google Auth not initialized. Please refresh the page.');
-        return;
-    }
+    // Request access token and show picker when received
+    tokenClient.callback = async (response) => {
+        if (response.error !== undefined) {
+            console.error('Token error:', response);
+            alert('Failed to authenticate with Google Drive');
+            return;
+        }
+        googleAccessToken = response.access_token;
+        showPicker();
+    };
     
-    authInstance.signIn().then(function() {
-        const token = authInstance.currentUser.get().getAuthResponse().access_token;
-        const picker = new google.picker.PickerBuilder()
-            .addView(google.picker.ViewId.DOCS_VIDEOS)
-            .setOAuthToken(token)
-            .setDeveloperKey(GOOGLE_API_KEY)
-            .setCallback(pickerCallback)
-            .build();
-        picker.setVisible(true);
-    }).catch(function(error) {
-        console.error('Google sign-in error:', error);
-        alert('Failed to sign in to Google Drive. Please try again.');
-    });
+    // Check if we already have a valid token
+    if (googleAccessToken) {
+        showPicker();
+    } else {
+        // Request a new token
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
+    }
+}
+
+function showPicker() {
+    const picker = new google.picker.PickerBuilder()
+        .addView(google.picker.ViewId.DOCS_VIDEOS)
+        .setOAuthToken(googleAccessToken)
+        .setDeveloperKey(GOOGLE_API_KEY)
+        .setCallback(pickerCallback)
+        .setOrigin(window.location.protocol + '//' + window.location.host)
+        .build();
+    picker.setVisible(true);
 }
 
 function pickerCallback(data) {
