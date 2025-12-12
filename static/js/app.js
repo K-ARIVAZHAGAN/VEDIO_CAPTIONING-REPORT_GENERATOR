@@ -951,19 +951,31 @@ async function downloadReport(format, includeAI = true) {
             const doc = generatePDF(reportData, includeAI);
             doc.save(`${baseFilename}.pdf`);
         } else if (format === 'docx') {
-            const docContent = generateDOCX(reportData);
+            const docContent = generateDOCX(reportData, includeAI);
             const zip = new PizZip();
+            
+            // Word document structure
             zip.file('word/document.xml', docContent);
+            
+            // Content Types
             zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="xml" ContentType="application/xml"/>
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
 </Types>`);
+            
+            // Relationships
             zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
 </Relationships>`);
+            
+            // Word relationships
+            zip.file('word/_rels/document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+</Relationships>`);
+            
             const blob = zip.generate({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
             saveAs(blob, `${baseFilename}.docx`);
         } else if (format === 'txt') {
@@ -1036,32 +1048,32 @@ function generatePDF(reportData, includeAI = true) {
     doc.setDrawColor(220, 220, 220);
     doc.rect(15, y - 5, 180, 28, 'S');
     
-    doc.text(`📹 Duration: ${durationFormatted}`, 20, y);
-    doc.text(`🎬 Scenes: ${scenesCount}`, 110, y);
+    doc.text(`Duration: ${durationFormatted}`, 20, y);
+    doc.text(`Scenes: ${scenesCount}`, 110, y);
     y += 7;
-    doc.text(`🤖 Model: ${modelSize}`, 20, y);
-    doc.text(`📝 Sections: ${sectionsCount}`, 110, y);
+    doc.text(`Model: ${modelSize}`, 20, y);
+    doc.text(`Sections: ${sectionsCount}`, 110, y);
     y += 7;
-    doc.text(`📅 Generated: ${new Date(timestamp).toLocaleString()}`, 20, y);
+    doc.text(`Generated: ${new Date(timestamp).toLocaleString()}`, 20, y);
     y += 12;
     
     // Table of Contents
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('📑 Table of Contents', 20, y);
+    doc.text('TABLE OF CONTENTS', 20, y);
     doc.setFont(undefined, 'normal');
     y += 8;
     doc.setFontSize(10);
     
     let tocItems = [];
-    if (includeAI && reportData.ai_summary) tocItems.push('🤖 AI Summary');
-    tocItems.push('📊 Summary');
-    tocItems.push('🔑 Key Points');
-    if (reportData.sections && reportData.sections.length > 0) tocItems.push('📖 Detailed Analysis');
-    tocItems.push('📄 Full Transcript');
+    if (includeAI && reportData.ai_summary) tocItems.push('1. AI-Generated Summary');
+    tocItems.push((tocItems.length + 1) + '. Summary');
+    tocItems.push((tocItems.length + 1) + '. Key Points');
+    if (reportData.sections && reportData.sections.length > 0) tocItems.push((tocItems.length + 1) + '. Detailed Analysis');
+    tocItems.push((tocItems.length + 1) + '. Full Transcript');
     
-    tocItems.forEach((item, idx) => {
-        doc.text(`${idx + 1}. ${item}`, 25, y);
+    tocItems.forEach((item) => {
+        doc.text(item, 25, y);
         y += 6;
     });
     y += 10;
@@ -1075,7 +1087,7 @@ function generatePDF(reportData, includeAI = true) {
         doc.setFontSize(16);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(26, 115, 232);
-        doc.text('🤖 AI-Generated Summary', 20, y);
+        doc.text('AI-GENERATED SUMMARY', 20, y);
         doc.setTextColor(0, 0, 0);
         doc.setFont(undefined, 'normal');
         y += 10;
@@ -1089,7 +1101,7 @@ function generatePDF(reportData, includeAI = true) {
         if (reportData.ai_summary.key_points && reportData.ai_summary.key_points.length > 0) {
             doc.setFontSize(12);
             doc.setTextColor(26, 115, 232);
-            doc.text('AI Key Points', 20, y);
+            doc.text('AI KEY POINTS:', 20, y);
             doc.setTextColor(0, 0, 0);
             y += 8;
             doc.setFontSize(10);
@@ -1115,7 +1127,7 @@ function generatePDF(reportData, includeAI = true) {
     }
     doc.setFontSize(16);
     doc.setFont(undefined, 'bold');
-    doc.text('📊 Summary', 20, y);
+    doc.text('SUMMARY', 20, y);
     doc.setFont(undefined, 'normal');
     y += 10;
     doc.setFontSize(10);
@@ -1132,7 +1144,7 @@ function generatePDF(reportData, includeAI = true) {
         }
         doc.setFontSize(16);
         doc.setFont(undefined, 'bold');
-        doc.text('🔑 Key Points', 20, y);
+        doc.text('KEY POINTS', 20, y);
         doc.setFont(undefined, 'normal');
         y += 10;
         doc.setFontSize(10);
@@ -1156,7 +1168,7 @@ function generatePDF(reportData, includeAI = true) {
         }
         doc.setFontSize(16);
         doc.setFont(undefined, 'bold');
-        doc.text('🎬 Scene Analysis', 20, y);
+        doc.text('SCENE ANALYSIS', 20, y);
         doc.setFont(undefined, 'normal');
         y += 10;
         doc.setFontSize(9);
@@ -1167,7 +1179,7 @@ function generatePDF(reportData, includeAI = true) {
                 doc.addPage();
                 y = 20;
             }
-            const sceneTime = formatTime(scene.timestamp || 0);
+            const sceneTime = formatTime(scene.start_time || 0);
             doc.text(`Scene ${idx + 1} [${sceneTime}]`, 20, y);
             y += 5;
         });
@@ -1189,7 +1201,7 @@ function generatePDF(reportData, includeAI = true) {
         }
         doc.setFontSize(16);
         doc.setFont(undefined, 'bold');
-        doc.text('📖 Detailed Analysis by Section', 20, y);
+        doc.text('DETAILED ANALYSIS BY SECTION', 20, y);
         doc.setFont(undefined, 'normal');
         y += 10;
         
@@ -1245,7 +1257,7 @@ function generatePDF(reportData, includeAI = true) {
     y = 20;
     doc.setFontSize(16);
     doc.setFont(undefined, 'bold');
-    doc.text('📄 Full Transcript', 20, y);
+    doc.text('FULL TRANSCRIPT', 20, y);
     doc.setFont(undefined, 'normal');
     y += 10;
     doc.setFontSize(9);
@@ -1288,8 +1300,7 @@ function generatePDF(reportData, includeAI = true) {
     return doc;
 }
 
-function generateDOCX(reportData) {
-    // Create a simple XML-based DOCX structure
+function generateDOCX(reportData, includeAI = true) {
     const metadata = reportData.metadata || {};
     const duration = metadata.duration || 0;
     const durationFormatted = formatDuration(duration);
@@ -1297,50 +1308,155 @@ function generateDOCX(reportData) {
     const timestamp = metadata.timestamp || reportData.date || new Date().toISOString();
     const title = reportData.title || 'Video Analysis';
     const summary = reportData.summary || 'No summary available';
+    const scenesCount = reportData.scenes ? reportData.scenes.length : 0;
+    const sectionsCount = reportData.sections ? reportData.sections.length : 0;
     
-    const content = `
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-  <w:body>
+    let bodyContent = '';
+    
+    // Title
+    bodyContent += `
     <w:p>
       <w:pPr><w:jc w:val="center"/></w:pPr>
       <w:r>
-        <w:rPr><w:b/><w:sz w:val="32"/></w:rPr>
+        <w:rPr><w:b/><w:sz w:val="36"/></w:rPr>
         <w:t>Video Analysis Report</w:t>
       </w:r>
     </w:p>
-    <w:p><w:r><w:t>Title: ${escapeXml(title)}</w:t></w:r></w:p>
+    <w:p>
+      <w:pPr><w:jc w:val="center"/></w:pPr>
+      <w:r>
+        <w:rPr><w:sz w:val="24"/><w:color w:val="666666"/></w:rPr>
+        <w:t>${escapeXml(title)}</w:t>
+      </w:r>
+    </w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>`;
+    
+    // Metadata
+    bodyContent += `
     <w:p><w:r><w:t>Duration: ${escapeXml(durationFormatted)}</w:t></w:r></w:p>
     <w:p><w:r><w:t>Model: ${escapeXml(modelSize)}</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Scenes: ${scenesCount}</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Sections: ${sectionsCount}</w:t></w:r></w:p>
     <w:p><w:r><w:t>Generated: ${escapeXml(new Date(timestamp).toLocaleString())}</w:t></w:r></w:p>
-    <w:p><w:r><w:t></w:t></w:r></w:p>
-    <w:p><w:r><w:rPr><w:b/><w:sz w:val="24"/></w:rPr><w:t>Summary</w:t></w:r></w:p>
-    <w:p><w:r><w:t>${escapeXml(summary)}</w:t></w:r></w:p>
-    <w:p><w:r><w:t></w:t></w:r></w:p>
-    ${reportData.key_points && reportData.key_points.length > 0 ? `
-    <w:p><w:r><w:rPr><w:b/><w:sz w:val="24"/></w:rPr><w:t>Key Points</w:t></w:r></w:p>
-    ${reportData.key_points.map((point, idx) => 
-      `<w:p><w:r><w:t>${idx + 1}. ${escapeXml(point)}</w:t></w:r></w:p>`
-    ).join('')}
-    <w:p><w:r><w:t></w:t></w:r></w:p>
-    ` : ''}
-    ${reportData.sections && reportData.sections.length > 0 && reportData.sections[0].summary ? `
-    <w:p><w:r><w:rPr><w:b/><w:sz w:val="24"/></w:rPr><w:t>Detailed Analysis by Section</w:t></w:r></w:p>
-    ${reportData.sections.map((section, idx) => `
-      <w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Section ${idx + 1} [${formatTime(section.start_time)} - ${formatTime(section.end_time)}]</w:t></w:r></w:p>
-      ${section.summary ? `<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Summary:</w:t></w:r></w:p><w:p><w:r><w:t>${escapeXml(section.summary)}</w:t></w:r></w:p>` : ''}
-      ${section.key_points && section.key_points.length > 0 ? `<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Key Points:</w:t></w:r></w:p>${section.key_points.map(pt => `<w:p><w:r><w:t>• ${escapeXml(pt)}</w:t></w:r></w:p>`).join('')}` : ''}
-      <w:p><w:r><w:t></w:t></w:r></w:p>
-    `).join('')}
-    <w:p><w:r><w:t></w:t></w:r></w:p>
-    ` : ''}
-    <w:p><w:r><w:rPr><w:b/><w:sz w:val="24"/></w:rPr><w:t>Full Transcript</w:t></w:r></w:p>
-    ${reportData.full_transcript ? 
-      `<w:p><w:r><w:t>${escapeXml(reportData.full_transcript)}</w:t></w:r></w:p>` :
-      (reportData.sections || []).map(section => 
-        `<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>[${formatTime(section.start_time)} - ${formatTime(section.end_time)}]</w:t></w:r></w:p><w:p><w:r><w:t>${escapeXml(section.text)}</w:t></w:r></w:p>`
-      ).join('')
+    <w:p><w:r><w:t></w:t></w:r></w:p>`;
+    
+    // AI Summary (if included)
+    if (includeAI && reportData.ai_summary) {
+        bodyContent += `
+    <w:p>
+      <w:r>
+        <w:rPr><w:b/><w:sz w:val="28"/><w:color w:val="1A73E8"/></w:rPr>
+        <w:t>AI-GENERATED SUMMARY</w:t>
+      </w:r>
+    </w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>`;
+        
+        const aiSummaryText = reportData.ai_summary.summary || reportData.ai_summary;
+        bodyContent += `<w:p><w:r><w:t>${escapeXml(aiSummaryText)}</w:t></w:r></w:p>`;
+        bodyContent += `<w:p><w:r><w:t></w:t></w:r></w:p>`;
+        
+        // AI Key Points
+        if (reportData.ai_summary.key_points && reportData.ai_summary.key_points.length > 0) {
+            bodyContent += `
+    <w:p>
+      <w:r>
+        <w:rPr><w:b/><w:sz w:val="24"/><w:color w:val="1A73E8"/></w:rPr>
+        <w:t>AI Key Points:</w:t>
+      </w:r>
+    </w:p>`;
+            reportData.ai_summary.key_points.forEach((point, idx) => {
+                const pointText = point.point || point;
+                bodyContent += `<w:p><w:r><w:t>${idx + 1}. ${escapeXml(pointText)}</w:t></w:r></w:p>`;
+            });
+            bodyContent += `<w:p><w:r><w:t></w:t></w:r></w:p>`;
+        }
     }
+    
+    // Summary
+    bodyContent += `
+    <w:p>
+      <w:r>
+        <w:rPr><w:b/><w:sz w:val="28"/></w:rPr>
+        <w:t>SUMMARY</w:t>
+      </w:r>
+    </w:p>
+    <w:p><w:r><w:t>${escapeXml(summary)}</w:t></w:r></w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>`;
+    
+    // Key Points
+    if (reportData.key_points && reportData.key_points.length > 0) {
+        bodyContent += `
+    <w:p>
+      <w:r>
+        <w:rPr><w:b/><w:sz w:val="28"/></w:rPr>
+        <w:t>KEY POINTS</w:t>
+      </w:r>
+    </w:p>`;
+        reportData.key_points.forEach((point, idx) => {
+            bodyContent += `<w:p><w:r><w:t>${idx + 1}. ${escapeXml(point)}</w:t></w:r></w:p>`;
+        });
+        bodyContent += `<w:p><w:r><w:t></w:t></w:r></w:p>`;
+    }
+    
+    // Detailed Analysis
+    if (reportData.sections && reportData.sections.length > 0 && reportData.sections[0].summary) {
+        bodyContent += `
+    <w:p>
+      <w:r>
+        <w:rPr><w:b/><w:sz w:val="28"/></w:rPr>
+        <w:t>DETAILED ANALYSIS BY SECTION</w:t>
+      </w:r>
+    </w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>`;
+        
+        reportData.sections.forEach((section, idx) => {
+            bodyContent += `
+    <w:p>
+      <w:r>
+        <w:rPr><w:b/><w:sz w:val="24"/></w:rPr>
+        <w:t>Section ${idx + 1} [${formatTime(section.start_time)} - ${formatTime(section.end_time)}]</w:t>
+      </w:r>
+    </w:p>`;
+            
+            if (section.summary) {
+                bodyContent += `<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Summary:</w:t></w:r></w:p>`;
+                bodyContent += `<w:p><w:r><w:t>${escapeXml(section.summary)}</w:t></w:r></w:p>`;
+            }
+            
+            if (section.key_points && section.key_points.length > 0) {
+                bodyContent += `<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Key Points:</w:t></w:r></w:p>`;
+                section.key_points.forEach(pt => {
+                    bodyContent += `<w:p><w:r><w:t>• ${escapeXml(pt)}</w:t></w:r></w:p>`;
+                });
+            }
+            bodyContent += `<w:p><w:r><w:t></w:t></w:r></w:p>`;
+        });
+    }
+    
+    // Full Transcript
+    bodyContent += `
+    <w:p>
+      <w:r>
+        <w:rPr><w:b/><w:sz w:val="28"/></w:rPr>
+        <w:t>FULL TRANSCRIPT</w:t>
+      </w:r>
+    </w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>`;
+    
+    if (reportData.full_transcript) {
+        bodyContent += `<w:p><w:r><w:t>${escapeXml(reportData.full_transcript)}</w:t></w:r></w:p>`;
+    } else if (reportData.sections && reportData.sections.length > 0) {
+        reportData.sections.forEach(section => {
+            bodyContent += `<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>[${formatTime(section.start_time)} - ${formatTime(section.end_time)}]</w:t></w:r></w:p>`;
+            bodyContent += `<w:p><w:r><w:t>${escapeXml(section.text)}</w:t></w:r></w:p>`;
+            bodyContent += `<w:p><w:r><w:t></w:t></w:r></w:p>`;
+        });
+    }
+    
+    const content = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    ${bodyContent}
   </w:body>
 </w:document>`;
     
@@ -1421,7 +1537,7 @@ function generateTXT(reportData, includeAI = true) {
         text += '═'.repeat(70) + '\n';
         const maxScenes = 20;
         reportData.scenes.slice(0, maxScenes).forEach((scene, idx) => {
-            const sceneTime = formatTime(scene.timestamp || 0);
+            const sceneTime = formatTime(scene.start_time || 0);
             text += `Scene ${idx + 1} [${sceneTime}]\n`;
         });
         if (reportData.scenes.length > maxScenes) {
