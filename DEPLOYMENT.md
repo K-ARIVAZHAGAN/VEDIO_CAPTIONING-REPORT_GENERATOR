@@ -1,6 +1,39 @@
 # Deployment Guide - Video Captioning & Report Generator
 
-## Quick Deployment with Docker
+## ⚡ Quick Deployment with Python (Recommended)
+
+### Prerequisites
+- Python 3.11+ installed
+- Git and Git LFS installed
+- FFmpeg installed
+- Minimum 8GB RAM
+
+### Installation Steps
+
+```bash
+# 1. Clone repository
+git clone https://github.com/K-ARIVAZHAGAN/VEDIO_CAPTIONING-REPORT_GENERATOR.git
+cd VEDIO_CAPTIONING-REPORT_GENERATOR
+
+# 2. Download model file
+git lfs pull
+
+# 3. Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# 4. Install dependencies
+pip install -r requirements.txt
+
+# 5. Run application
+python app.py
+```
+
+**Access at:** `http://localhost:5000`
+
+---
+
+## 🐳 Alternative: Deployment with Docker
 
 ### Prerequisites
 - Docker installed (version 20.10+)
