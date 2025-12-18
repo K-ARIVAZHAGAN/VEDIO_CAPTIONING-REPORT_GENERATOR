@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     git \
     git-lfs \
+    build-essential \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
 # Initialize git-lfs
