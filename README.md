@@ -278,76 +278,86 @@ OUTPUT: Captioned Video + Reports + AI Insights
 python --version  # Should be 3.8+
 ```
 
-#### 2. **FFmpeg** (Required for video processing)
-
-**Windows:**
-```bash
-# Download from: https://ffmpeg.org/download.html
-# Or use Chocolatey:
-choco install ffmpeg
-
-# Verify installation:
-ffmpeg -version
-```
-
-**macOS:**
-```bash
-brew install ffmpeg
-
-# Verify:
-ffmpeg -version
-```
-
-**Linux (Ubuntu/Debian):**
-```bash
-sudo apt update
-sudo apt install ffmpeg
-
-# Verify:
-ffmpeg -version
-```
-
-#### 3. **Git** (To clone repository)
+#### 2. **Git** (To clone repository)
 ```bash
 git --version  # Should be installed
 ```
 
-### Installation Steps
+**✅ NO FFMPEG INSTALLATION NEEDED** - Bundled automatically with pip install!
 
-#### Step 1: Clone Repository
-```bash
-# Clone the project
-git clone <repository-url>
-cd VEDIO_CAPTION&REPORT_GENERATOR
+---
 
-# Or if you have a ZIP file:
-# Extract and navigate to the folder
+### 🪟 Windows Installation (Recommended)
+
+**One-Command Installation:**
+```powershell
+# Clone the repository
+git clone https://github.com/K-ARIVAZHAGAN/VEDIO_CAPTIONING-REPORT_GENERATOR.git
+cd VEDIO_CAPTIONING-REPORT_GENERATOR
+
+# Run the automated installer
+.\install_windows.ps1
 ```
 
-#### Step 2: Create Virtual Environment
-```bash
-# Create virtual environment
+**That's it!** The script handles:
+- ✅ Virtual environment creation
+- ✅ llama-cpp-python with pre-built wheels (no build tools needed)
+- ✅ All dependencies including bundled ffmpeg
+- ✅ Verification of installation
+
+**Manual Windows Installation:**
+```powershell
+# 1. Clone repository
+git clone https://github.com/K-ARIVAZHAGAN/VEDIO_CAPTIONING-REPORT_GENERATOR.git
+cd VEDIO_CAPTIONING-REPORT_GENERATOR
+
+# 2. Create virtual environment
 python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
-# Activate virtual environment
-# Windows:
-.venv\Scripts\activate
+# 3. Install llama-cpp-python first (pre-built wheel - no compiler needed)
+pip install llama-cpp-python==0.2.90 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 
-# macOS/Linux:
+# 4. Install remaining dependencies
+pip install -r requirements.txt
+```
+
+---
+
+### 🍎 macOS Installation
+
+```bash
+# 1. Clone repository
+git clone https://github.com/K-ARIVAZHAGAN/VEDIO_CAPTIONING-REPORT_GENERATOR.git
+cd VEDIO_CAPTIONING-REPORT_GENERATOR
+
+# 2. Create virtual environment
+python3 -m venv .venv
 source .venv/bin/activate
 
-# You should see (.venv) in your terminal prompt
-```
-
-#### Step 3: Install Dependencies
-```bash
-# Install all required packages
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# This installs:
-# - Flask (web framework)
-# - OpenAI Whisper (transcription)
-# - OpenCV (video processing)
+# Note: llama-cpp-python will build from source (requires Xcode Command Line Tools)
+# If build fails, install pre-built wheel:
+pip install llama-cpp-python==0.2.90 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+```
+
+---
+
+### 🐧 Linux Installation
+
+```bash
+# 1. Clone repository
+git clone https://github.com/K-ARIVAZHAGAN/VEDIO_CAPTIONING-REPORT_GENERATOR.git
+cd VEDIO_CAPTIONING-REPORT_GENERATOR
+
+# 2. Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
 # - PySceneDetect (scene detection)
 # - yt-dlp (YouTube download)
 # - gdown (Google Drive download)

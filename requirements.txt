@@ -16,7 +16,8 @@ torchaudio>=2.2.0
 openai>=1.0.0
 
 # Local LLM for offline AI features (summary & Q&A)
-llama-cpp-python==0.2.90
+# For Windows: Install separately with pre-built wheel (see README)
+# llama-cpp-python==0.2.90
 
 # YouTube download
 yt-dlp==2025.12.8  # Primary - supports YouTube, Google Drive, Dropbox
