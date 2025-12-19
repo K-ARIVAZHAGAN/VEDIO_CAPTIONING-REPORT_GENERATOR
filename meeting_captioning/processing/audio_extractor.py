@@ -83,9 +83,10 @@ class AudioExtractor(LoggerMixin):
             output_path = video_path.parent / f"{video_path.stem}_audio.{format}"
         
         try:
-            # Build FFmpeg command
+            # Build FFmpeg command with AV1 codec support
             command = [
                 'ffmpeg',
+                '-err_detect', 'ignore_err',     # Ignore codec errors
                 '-i', str(video_path),           # Input file
                 '-vn',                            # No video
                 '-acodec', self._get_codec(format),
