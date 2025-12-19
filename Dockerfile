@@ -29,8 +29,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p outputs temp models static/uploads
+# Create necessary directories with proper permissions
+RUN mkdir -p outputs temp models static/uploads && \
+    chmod -R 777 outputs temp static/uploads && \
+    chmod -R 755 models
 
 # Set environment variables
 ENV FLASK_APP=app.py
