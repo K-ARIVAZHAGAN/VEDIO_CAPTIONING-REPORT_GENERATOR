@@ -14,6 +14,12 @@ from pathlib import Path
 from typing import List, Optional
 from dataclasses import dataclass
 
+try:
+    from imageio_ffmpeg import get_ffmpeg_exe
+    FFMPEG_CMD = get_ffmpeg_exe()
+except ImportError:
+    FFMPEG_CMD = 'ffmpeg'  # Fallback to system ffmpeg
+
 from meeting_captioning.config import Config
 from meeting_captioning.utils.logging_config import LoggerMixin
 from meeting_captioning.utils.time_utils import format_timestamp
@@ -152,7 +158,7 @@ class CaptionGenerator(LoggerMixin):
             # Use .as_posix() for cross-platform compatibility
             # FFmpeg handles forward slashes on Windows fine for file I/O
             command = [
-                "ffmpeg",
+                FFMPEG_CMD,
                 "-i", video_path.as_posix(),          # Input can have any chars
                 "-vf", subtitles_filter,              # Filter uses simple filename only
                 "-c:v", "libx264",                    # H.264 codec

@@ -5,6 +5,7 @@ python-dotenv==1.0.0
 opencv-python==4.8.1.78
 moviepy==1.0.3
 ffmpeg-python==0.2.0
+imageio-ffmpeg>=0.4.9  # Bundled ffmpeg - no system installation needed
 
 # Audio transcription
 openai-whisper==20231117

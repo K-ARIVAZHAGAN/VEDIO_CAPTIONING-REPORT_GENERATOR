@@ -10,6 +10,12 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 import wave
 
+try:
+    from imageio_ffmpeg import get_ffmpeg_exe
+    FFMPEG_CMD = get_ffmpeg_exe()
+except ImportError:
+    FFMPEG_CMD = 'ffmpeg'  # Fallback to system ffmpeg
+
 from meeting_captioning.config import Config
 from meeting_captioning.utils.logging_config import LoggerMixin
 from meeting_captioning.utils.error_handling import ProcessingError
@@ -36,16 +42,15 @@ class AudioExtractor(LoggerMixin):
         """Check if FFmpeg is available."""
         try:
             result = subprocess.run(
-                ['ffmpeg', '-version'],
+                [FFMPEG_CMD, '-version'],
                 capture_output=True,
                 text=True,
                 check=True
             )
-            self.logger.debug("FFmpeg is available")
+            self.logger.debug(f"FFmpeg is available: {FFMPEG_CMD}")
         except (subprocess.CalledProcessError, FileNotFoundError):
             raise ProcessingError(
-                "FFmpeg not found. Please install FFmpeg: "
-                "https://ffmpeg.org/download.html"
+                "FFmpeg not found. Please install imageio-ffmpeg: pip install imageio-ffmpeg"
             )
     
     def extract_audio(
@@ -85,7 +90,7 @@ class AudioExtractor(LoggerMixin):
         try:
             # Build FFmpeg command with AV1 codec support
             command = [
-                'ffmpeg',
+                FFMPEG_CMD,
                 '-err_detect', 'ignore_err',     # Ignore codec errors
                 '-i', str(video_path),           # Input file
                 '-vn',                            # No video
