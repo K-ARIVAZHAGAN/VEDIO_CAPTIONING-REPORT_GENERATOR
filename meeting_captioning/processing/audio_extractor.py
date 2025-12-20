@@ -250,7 +250,7 @@ class AudioExtractor(LoggerMixin):
         
         try:
             command = [
-                'ffmpeg',
+                FFMPEG_CMD,
                 '-i', str(video_path),
                 '-ss', str(start_time),
                 '-t', str(duration),
@@ -296,7 +296,7 @@ class AudioExtractor(LoggerMixin):
             # Two-pass normalization using FFmpeg loudnorm filter
             # First pass: analyze
             command_analyze = [
-                'ffmpeg',
+                FFMPEG_CMD,
                 '-i', str(audio_path),
                 '-af', f'loudnorm=I={target_level}:print_format=json',
                 '-f', 'null',
@@ -311,7 +311,7 @@ class AudioExtractor(LoggerMixin):
             
             # Second pass: apply normalization
             command_normalize = [
-                'ffmpeg',
+                FFMPEG_CMD,
                 '-i', str(audio_path),
                 '-af', f'loudnorm=I={target_level}',
                 '-ar', '16000',
@@ -355,7 +355,7 @@ class AudioExtractor(LoggerMixin):
         
         try:
             command = [
-                'ffmpeg',
+                FFMPEG_CMD,
                 '-i', str(audio_path),
                 '-af', f'silencedetect=n={silence_threshold}dB:d={min_silence_duration}',
                 '-f', 'null',
