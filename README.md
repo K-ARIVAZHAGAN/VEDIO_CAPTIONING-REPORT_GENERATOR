@@ -54,6 +54,8 @@ This project develops a Python-based system that automatically generates detaile
 
 ## ⚡ Quick Start
 
+**Requirements:** Python 3.8-3.12 (Python 3.13 not yet fully compatible with all dependencies)
+
 ### Windows
 ```powershell
 git clone https://github.com/K-ARIVAZHAGAN/VEDIO_CAPTIONING-REPORT_GENERATOR.git
@@ -466,7 +468,7 @@ With:    https://1drv.ms/v/s!ABC123XYZ?download=1
 ## 💾 Installation Details
 
 ### Requirements
-- **Python 3.8+** (ONLY requirement!)
+- **Python 3.8-3.12** (ONLY requirement! Python 3.13 not yet compatible)
 - **8GB RAM minimum** (16GB recommended for large videos)
 - **Internet:** First-time download of models (~3GB)
 
