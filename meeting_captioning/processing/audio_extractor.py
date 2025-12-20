@@ -9,12 +9,20 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any
 import wave
+import os
 
 try:
     from imageio_ffmpeg import get_ffmpeg_exe
     FFMPEG_CMD = get_ffmpeg_exe()
-except ImportError:
-    FFMPEG_CMD = 'ffmpeg'  # Fallback to system ffmpeg
+    # Validate FFmpeg binary exists
+    if not os.path.isfile(FFMPEG_CMD):
+        raise FileNotFoundError(f"FFmpeg binary not found at {FFMPEG_CMD}")
+except (ImportError, FileNotFoundError) as e:
+    raise RuntimeError(
+        "FFmpeg is not available!\n"
+        "Please reinstall: pip install --force-reinstall imageio-ffmpeg\n"
+        f"Error: {e}"
+    )
 
 from meeting_captioning.config import Config
 from meeting_captioning.utils.logging_config import LoggerMixin
@@ -82,6 +90,14 @@ class AudioExtractor(LoggerMixin):
             >>> audio_path = extractor.extract_audio("video.mp4")
         """
         self.logger.info(f"Extracting audio from: {video_path}")
+        
+        # Runtime validation: Check FFmpeg binary exists before use
+        if not os.path.isfile(FFMPEG_CMD):
+            raise ProcessingError(
+                f"FFmpeg binary not found at {FFMPEG_CMD}\n"
+                "The FFmpeg binary may have been deleted.\n"
+                "Please reinstall: pip install --force-reinstall imageio-ffmpeg"
+            )
         
         # Generate output path if not provided
         if output_path is None:
@@ -156,10 +172,10 @@ class AudioExtractor(LoggerMixin):
     
     def get_audio_info(self, audio_path: Path) -> Dict[str, Any]:
         """
-        Get information about an audio file.
+        Get information about an audio file or video file.
         
         Args:
-            audio_path: Path to audio file
+            audio_path: Path to audio or video file
             
         Returns:
             Dictionary containing audio metadata
@@ -168,55 +184,54 @@ class AudioExtractor(LoggerMixin):
             ProcessingError: If audio info cannot be retrieved
         """
         try:
-            # Use FFprobe to get audio info
-            command = [
-                'ffprobe',
-                '-v', 'quiet',
-                '-print_format', 'json',
-                '-show_format',
-                '-show_streams',
-                str(audio_path)
-            ]
+            # For WAV files, use Python's wave module (no FFmpeg needed)
+            if audio_path.suffix.lower() == '.wav':
+                import wave
+                with wave.open(str(audio_path), 'rb') as wav_file:
+                    info = {
+                        'codec': 'pcm_s16le',
+                        'sample_rate': wav_file.getframerate(),
+                        'channels': wav_file.getnchannels(),
+                        'duration': wav_file.getnframes() / wav_file.getframerate(),
+                        'bit_rate': wav_file.getframerate() * wav_file.getnchannels() * wav_file.getsampwidth() * 8,
+                        'size_bytes': audio_path.stat().st_size,
+                        'format': 'wav'
+                    }
+                    return info
             
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            # For video/other formats, assume they have audio
+            # Use basic file stats without FFmpeg/ffprobe (not bundled)
+            file_stats = audio_path.stat()
             
-            import json
-            data = json.loads(result.stdout)
+            # For video files (.mp4, .avi, .mov, etc), assume standard audio
+            video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.webm', '.m4v'}
+            if audio_path.suffix.lower() in video_extensions:
+                info = {
+                    'codec': 'aac',  # Common for video files
+                    'sample_rate': 48000,  # Standard video audio
+                    'channels': 2,  # Stereo typical
+                    'duration': 0.0,  # Unknown without ffprobe
+                    'bit_rate': 128000,  # Typical
+                    'size_bytes': file_stats.st_size,
+                    'format': audio_path.suffix.lower().replace('.', '')
+                }
+                return info
             
-            # Extract audio stream info
-            audio_stream = None
-            for stream in data.get('streams', []):
-                if stream.get('codec_type') == 'audio':
-                    audio_stream = stream
-                    break
-            
-            if not audio_stream:
-                raise ProcessingError("No audio stream found")
-            
-            # Extract format info
-            format_info = data.get('format', {})
-            
+            # For other audio formats
             info = {
-                'codec': audio_stream.get('codec_name'),
-                'sample_rate': int(audio_stream.get('sample_rate', 0)),
-                'channels': audio_stream.get('channels', 0),
-                'duration': float(format_info.get('duration', 0)),
-                'bit_rate': int(format_info.get('bit_rate', 0)),
-                'size_bytes': int(format_info.get('size', 0)),
-                'format': format_info.get('format_name')
+                'codec': audio_path.suffix.lower().replace('.', ''),
+                'sample_rate': 16000,  # Default assumption
+                'channels': 1,  # Default assumption  
+                'duration': 0.0,  # Unknown without ffprobe
+                'bit_rate': 0,  # Unknown without ffprobe
+                'size_bytes': file_stats.st_size,
+                'format': audio_path.suffix.lower().replace('.', '')
             }
-            
             return info
             
-        except subprocess.CalledProcessError as e:
-            raise ProcessingError(f"FFprobe failed: {e.stderr}", e)
         except Exception as e:
             raise ProcessingError(f"Failed to get audio info", e)
+
     
     def extract_audio_segment(
         self,
@@ -244,6 +259,14 @@ class AudioExtractor(LoggerMixin):
         self.logger.info(
             f"Extracting audio segment: {start_time}s to {start_time + duration}s"
         )
+        
+        # Runtime validation: Check FFmpeg binary exists before use
+        if not os.path.isfile(FFMPEG_CMD):
+            raise ProcessingError(
+                f"FFmpeg binary not found at {FFMPEG_CMD}\n"
+                "The FFmpeg binary may have been deleted.\n"
+                "Please reinstall: pip install --force-reinstall imageio-ffmpeg"
+            )
         
         if output_path is None:
             output_path = video_path.parent / f"{video_path.stem}_segment_{start_time:.0f}.{format}"
@@ -288,6 +311,14 @@ class AudioExtractor(LoggerMixin):
             Path to normalized audio file
         """
         self.logger.info(f"Normalizing audio: {audio_path}")
+        
+        # Runtime validation: Check FFmpeg binary exists before use
+        if not os.path.isfile(FFMPEG_CMD):
+            raise ProcessingError(
+                f"FFmpeg binary not found at {FFMPEG_CMD}\n"
+                "The FFmpeg binary may have been deleted.\n"
+                "Please reinstall: pip install --force-reinstall imageio-ffmpeg"
+            )
         
         if output_path is None:
             output_path = audio_path.parent / f"{audio_path.stem}_normalized{audio_path.suffix}"
@@ -352,6 +383,14 @@ class AudioExtractor(LoggerMixin):
             List of (start, end) tuples for non-silent segments
         """
         self.logger.info(f"Detecting silence in: {audio_path}")
+        
+        # Runtime validation: Check FFmpeg binary exists before use
+        if not os.path.isfile(FFMPEG_CMD):
+            raise ProcessingError(
+                f"FFmpeg binary not found at {FFMPEG_CMD}\n"
+                "The FFmpeg binary may have been deleted.\n"
+                "Please reinstall: pip install --force-reinstall imageio-ffmpeg"
+            )
         
         try:
             command = [

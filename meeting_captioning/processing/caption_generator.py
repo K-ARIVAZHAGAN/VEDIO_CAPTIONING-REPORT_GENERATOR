@@ -17,8 +17,15 @@ from dataclasses import dataclass
 try:
     from imageio_ffmpeg import get_ffmpeg_exe
     FFMPEG_CMD = get_ffmpeg_exe()
-except ImportError:
-    FFMPEG_CMD = 'ffmpeg'  # Fallback to system ffmpeg
+    # Validate FFmpeg binary exists
+    if not os.path.isfile(FFMPEG_CMD):
+        raise FileNotFoundError(f"FFmpeg binary not found at {FFMPEG_CMD}")
+except (ImportError, FileNotFoundError) as e:
+    raise RuntimeError(
+        "FFmpeg is not available!\n"
+        "Please reinstall: pip install --force-reinstall imageio-ffmpeg\n"
+        f"Error: {e}"
+    )
 
 from meeting_captioning.config import Config
 from meeting_captioning.utils.logging_config import LoggerMixin
@@ -146,6 +153,14 @@ class CaptionGenerator(LoggerMixin):
             
             self.logger.info(f"Original output name: {output_path.name}")
             self.logger.info(f"Sanitized output name: {output_name_clean}")
+            
+            # Runtime validation: Check FFmpeg binary exists before use
+            if not os.path.isfile(FFMPEG_CMD):
+                raise ProcessingError(
+                    f"FFmpeg binary not found at {FFMPEG_CMD}\n"
+                    "The FFmpeg binary may have been deleted.\n"
+                    "Please reinstall: pip install --force-reinstall imageio-ffmpeg"
+                )
             
             # ====================================================================
             # STEP 3: Build FFmpeg command

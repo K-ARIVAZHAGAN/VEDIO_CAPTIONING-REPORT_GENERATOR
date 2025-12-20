@@ -28,8 +28,15 @@ except ImportError:
 try:
     from imageio_ffmpeg import get_ffmpeg_exe
     FFMPEG_PATH = get_ffmpeg_exe()
-except ImportError:
-    FFMPEG_PATH = 'ffmpeg'  # Fallback to system ffmpeg
+    # Validate FFmpeg binary exists
+    if not os.path.isfile(FFMPEG_PATH):
+        raise FileNotFoundError(f"FFmpeg binary not found at {FFMPEG_PATH}")
+except (ImportError, FileNotFoundError) as e:
+    raise RuntimeError(
+        "FFmpeg is not available!\n"
+        "Please reinstall: pip install --force-reinstall imageio-ffmpeg\n"
+        f"Error: {e}"
+    )
 
 from meeting_captioning.config import Config
 from meeting_captioning.utils.logging_config import LoggerMixin
@@ -211,6 +218,14 @@ class VideoLoader(LoggerMixin):
     def _download_with_ytdlp(self, url: str) -> Path:
         """Download video using yt-dlp (supports YouTube, Google Drive, Dropbox, and more)."""
         try:
+            # Runtime validation: Check FFmpeg binary exists before use
+            if not os.path.isfile(FFMPEG_PATH):
+                raise VideoLoadError(
+                    f"FFmpeg binary not found at {FFMPEG_PATH}\n"
+                    "The FFmpeg binary may have been deleted.\n"
+                    "Please reinstall: pip install --force-reinstall imageio-ffmpeg"
+                )
+            
             output_template = str(self.temp_dir / '%(title)s_%(id)s.%(ext)s')
             
             ydl_opts = {

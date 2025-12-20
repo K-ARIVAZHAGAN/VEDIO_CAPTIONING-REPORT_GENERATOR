@@ -4,10 +4,40 @@ Transcription module for converting speech to text.
 This module uses OpenAI Whisper for high-quality speech-to-text transcription.
 """
 
+import os
+import shutil
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
 import json
+
+# Check FFmpeg availability for Whisper
+try:
+    from imageio_ffmpeg import get_ffmpeg_exe
+    FFMPEG_PATH = get_ffmpeg_exe()
+    # Validate binary exists
+    if not os.path.isfile(FFMPEG_PATH):
+        raise FileNotFoundError(f"FFmpeg binary not found at {FFMPEG_PATH}")
+    
+    # CRITICAL: Whisper expects 'ffmpeg.exe' (or 'ffmpeg' on Linux/Mac)
+    # Create a copy with the standard name if it doesn't exist
+    ffmpeg_dir = os.path.dirname(FFMPEG_PATH)
+    standard_name = 'ffmpeg.exe' if os.name == 'nt' else 'ffmpeg'
+    standard_path = os.path.join(ffmpeg_dir, standard_name)
+    
+    if not os.path.exists(standard_path):
+        shutil.copy2(FFMPEG_PATH, standard_path)
+    
+    # Set environment variable for Whisper to find FFmpeg
+    os.environ['PATH'] = ffmpeg_dir + os.pathsep + os.environ.get('PATH', '')
+    
+except (ImportError, FileNotFoundError) as e:
+    raise RuntimeError(
+        "FFmpeg is not available!\n"
+        "Whisper requires FFmpeg for audio processing.\n"
+        "Please reinstall: pip install --force-reinstall imageio-ffmpeg\n"
+        f"Error: {e}"
+    )
 
 from meeting_captioning.config import Config
 from meeting_captioning.utils.logging_config import LoggerMixin
@@ -116,6 +146,15 @@ class Transcriber(LoggerMixin):
             TranscriptionError: If transcription fails
         """
         self.logger.info(f"Transcribing audio: {audio_path}")
+        
+        # Runtime validation: Check FFmpeg still exists
+        if not os.path.isfile(FFMPEG_PATH):
+            raise TranscriptionError(
+                f"FFmpeg binary not found at {FFMPEG_PATH}\n"
+                "The FFmpeg binary may have been deleted.\n"
+                "Whisper requires FFmpeg for audio processing.\n"
+                "Please reinstall: pip install --force-reinstall imageio-ffmpeg"
+            )
         
         try:
             # Transcribe with Whisper
