@@ -25,6 +25,12 @@ except ImportError:
     YTDLP_AVAILABLE = False
     raise ImportError("yt-dlp is required. Install with: pip install yt-dlp")
 
+try:
+    from imageio_ffmpeg import get_ffmpeg_exe
+    FFMPEG_PATH = get_ffmpeg_exe()
+except ImportError:
+    FFMPEG_PATH = 'ffmpeg'  # Fallback to system ffmpeg
+
 from meeting_captioning.config import Config
 from meeting_captioning.utils.logging_config import LoggerMixin
 from meeting_captioning.utils.error_handling import VideoLoadError
@@ -216,6 +222,7 @@ class VideoLoader(LoggerMixin):
                 'prefer_insecure': False,
                 'cookiefile': None,
                 'extract_flat': False,
+                'ffmpeg_location': FFMPEG_PATH,  # Use bundled ffmpeg
             }
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
