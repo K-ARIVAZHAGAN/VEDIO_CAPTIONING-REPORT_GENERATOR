@@ -82,7 +82,18 @@ Enable users to upload videos directly from **Google Drive** and **Dropbox** wit
      - User support email: Your email
      - Developer contact: Your email
    - Click "SAVE AND CONTINUE"
-   - Scopes: Click "SAVE AND CONTINUE" (use defaults)
+   
+   - **Scopes Configuration (IMPORTANT):**
+     - Click "ADD OR REMOVE SCOPES"
+     - Search and add these scopes:
+       - ✅ `https://www.googleapis.com/auth/drive.readonly` - View files in Drive
+       - ✅ `https://www.googleapis.com/auth/drive.file` - View/manage files created by this app
+       - ✅ `openid` - Authenticate identity (required for sign-in)
+       - ✅ `https://www.googleapis.com/auth/userinfo.profile` - View basic profile info
+       - ✅ `https://www.googleapis.com/auth/userinfo.email` - View email address
+     - Click "UPDATE" at bottom
+     - Click "SAVE AND CONTINUE"
+   
    - Test users: Add your email
    - Click "SAVE AND CONTINUE"
    - Click "BACK TO DASHBOARD"
@@ -335,9 +346,15 @@ FLASK_ENV=development
 ### Issue: "401 Unauthorized" error with Google
 **Solutions:**
 1. Check OAuth consent screen is configured
-2. Add your email as test user
-3. Verify Authorized JavaScript origins includes `http://localhost:5000`
-4. Make sure both APIs are enabled (Drive + Picker)
+2. **Verify required scopes are added:**
+   - `https://www.googleapis.com/auth/drive.readonly`
+   - `https://www.googleapis.com/auth/drive.file`
+   - `openid` (for identity/sign-in)
+   - `https://www.googleapis.com/auth/userinfo.profile`
+   - `https://www.googleapis.com/auth/userinfo.email`
+3. Add your email as test user
+4. Verify Authorized JavaScript origins includes `http://localhost:5000`
+5. Make sure both APIs are enabled (Drive + Picker)
 
 ### Issue: "Invalid App Key" with Dropbox
 **Solutions:**
