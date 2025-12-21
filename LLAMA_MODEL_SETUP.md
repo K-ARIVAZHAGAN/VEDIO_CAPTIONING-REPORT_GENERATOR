@@ -9,6 +9,42 @@ The AI summary feature requires the **Llama 3.2 3B** model file. This is **optio
 
 ## 📥 Option 1: Quick Download (Recommended)
 
+### Method A: Direct Google Drive Download (Fastest)
+
+**Pre-uploaded model available on Google Drive (provided by project maintainer):**
+
+1. **Download from Google Drive:**
+   - Visit: https://drive.google.com/drive/folders/14SIbTmyqwIUZ71AbfUs5TAYXIbvm9IjD?usp=drive_link
+   - Click on `llama-3.2-3b-instruct.Q4_K_M.gguf`
+   - Click Download button (⬇️)
+   - Save to your Downloads folder
+
+2. **Move to project models folder:**
+   ```bash
+   # Windows PowerShell
+   mkdir models -ErrorAction SilentlyContinue
+   Move-Item -Path "$env:USERPROFILE\Downloads\llama-3.2-3b-instruct.Q4_K_M.gguf" -Destination "models\" -Force
+
+   # Mac/Linux
+   mkdir -p models
+   mv ~/Downloads/llama-3.2-3b-instruct.Q4_K_M.gguf models/
+   ```
+
+3. **Verify the file:**
+   ```bash
+   # Windows PowerShell
+   Get-ChildItem models/
+
+   # Mac/Linux
+   ls -lh models/
+   ```
+
+**✅ This is the fastest method!** File is already available on Google Drive.
+
+---
+
+### Method B: Download from Hugging Face
+
 ### Step 1: Create models directory
 ```bash
 # Windows PowerShell
@@ -23,6 +59,8 @@ mkdir -p models
 ```
 https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf
 ```
+
+**Note:** Hugging Face download may be slower depending on your location. Consider using the Google Drive link above for faster download.
 
 **Methods:**
 
@@ -231,6 +269,11 @@ LLM_MODEL_PATH = "models/llama-3.2-7b-instruct.Q4_K_M.gguf"
 ## 📝 Quick Summary for Other Systems
 
 **Minimal steps:**
+1. Download model from Google Drive: https://drive.google.com/drive/folders/14SIbTmyqwIUZ71AbfUs5TAYXIbvm9IjD?usp=drive_link
+2. Move file to `models/llama-3.2-3b-instruct.Q4_K_M.gguf`
+3. Run: `python app.py`
+
+**Alternative (if Google Drive unavailable):**
 1. Ensure `models/` folder exists
 2. Download: https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf
 3. Save as: `models/llama-3.2-3b-instruct.Q4_K_M.gguf`
