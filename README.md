@@ -283,6 +283,20 @@ python --version  # Should be 3.8-3.12 (NOT 3.13 - has compatibility issues)
 git --version  # Should be installed
 ```
 
+#### 3. **Llama Model** (Optional - for AI summaries)
+> **⚠️ Optional Feature:** AI summaries require the Llama 3.2 3B model (~2GB)
+> 
+> **System works WITHOUT the model** - you'll just skip AI summaries
+> 
+> **📖 [Complete Llama Model Setup Guide →](LLAMA_MODEL_SETUP.md)**
+
+#### 4. **Cloud Storage** (Optional - Google Drive/Dropbox uploads)
+> **⚠️ Optional Feature:** Enable users to upload videos directly from cloud storage
+> 
+> **System works WITHOUT cloud setup** - local file uploads work perfectly
+> 
+> **📖 [Complete Cloud Storage Setup Guide →](CLOUD_STORAGE_SETUP.md)**
+
 > **✅ NO FFMPEG INSTALLATION NEEDED!**
 > 
 > FFmpeg is automatically bundled via the `imageio-ffmpeg` package (~31MB).  

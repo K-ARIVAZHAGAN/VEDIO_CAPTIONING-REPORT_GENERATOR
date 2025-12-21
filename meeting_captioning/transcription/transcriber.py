@@ -102,6 +102,12 @@ class Transcriber(LoggerMixin):
         try:
             import whisper
             import torch
+            import ssl
+            import urllib.request
+            
+            # Disable SSL certificate verification for model download
+            # This fixes issues in corporate networks or with proxy servers
+            ssl._create_default_https_context = ssl._create_unverified_context
             
             # Determine device
             if self.device == "auto":

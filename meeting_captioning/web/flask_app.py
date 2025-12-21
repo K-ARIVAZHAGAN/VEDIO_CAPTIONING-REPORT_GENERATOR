@@ -361,7 +361,11 @@ def chat_with_ai():
 def download_file(filename: str):
     """Download a generated file"""
     try:
-        filepath = Path(filename)
+        # Handle absolute paths (Mac/Linux start with /, Windows with C:\)
+        if filename.startswith('/') or (len(filename) > 1 and filename[1] == ':'):
+            filepath = Path(filename)
+        else:
+            filepath = Path('/') / filename if not os.name == 'nt' else Path(filename)
         
         # Log the request for debugging
         app.logger.info(f"Download request for: {filepath}")
@@ -410,7 +414,11 @@ def download_file(filename: str):
 def get_transcript(filename: str):
     """Get transcript content as text"""
     try:
-        filepath = Path(filename)
+        # Handle absolute paths (Mac/Linux start with /, Windows with C:\)
+        if filename.startswith('/') or (len(filename) > 1 and filename[1] == ':'):
+            filepath = Path(filename)
+        else:
+            filepath = Path('/') / filename if not os.name == 'nt' else Path(filename)
         
         if not filepath.exists():
             return jsonify({'error': 'File not found'}), 404
@@ -429,7 +437,11 @@ def get_transcript(filename: str):
 def get_captions(filename: str):
     """Get caption/SRT content"""
     try:
-        filepath = Path(filename)
+        # Handle absolute paths (Mac/Linux start with /, Windows with C:\)
+        if filename.startswith('/') or (len(filename) > 1 and filename[1] == ':'):
+            filepath = Path(filename)
+        else:
+            filepath = Path('/') / filename if not os.name == 'nt' else Path(filename)
         
         if not filepath.exists():
             return jsonify({'error': 'File not found'}), 404
